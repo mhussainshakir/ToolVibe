@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eds-v2';
+const CACHE_NAME = 'tv-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -11,6 +11,10 @@ const ASSETS = [
   '/image-tools.html',
   '/text-tools.html',
   '/business-tools.html',
+  '/bg-remover.html',
+  '/image-cleaner.html',
+  '/smart-crop.html',
+  '/doc-scanner.html',
   '/manifest.json'
 ];
 

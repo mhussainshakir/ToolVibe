@@ -1,0 +1,31 @@
+{
+  "name": "ToolVibe - Free Online Document & AI Tools",
+  "short_name": "ToolVibe",
+  "description": "50+ free online tools for PDF, Image, Text & Business documents. AI Background Remover, Image Cleaner, Smart Crop, Document Scanner & more. 100% private, works offline.",
+  "start_url": "/index.html",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities", "business"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
