@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Editor - WPS Style | Elite Document Suite</title>
+  <meta name="description" content="Free online PDF editor with WPS Office-like features. Add text, draw, highlight, shapes, images, signatures and more. Edit and save PDFs in your browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #1a1a2e; color: #e0e0e0;
+    }
+
+    /* ===== APP LAYOUT ===== */
+    .app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ===== TOP BAR ===== */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #16162a; border-bottom: 1px solid #2a2a4a;
+      padding: 0 16px; height: 48px; flex-shrink: 0;
+    }
+    .top-bar-left { display: flex; align-items: center; gap: 12px; }
+    .top-bar-left .logo {
+      font-weight: 700; font-size: 0.95rem;
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .top-bar-left .file-name {
+      font-size: 0.85rem; color: #8888aa; max-width: 200px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .top-bar-right { display: flex; align-items: center; gap: 8px; }
+    .top-btn {
+      padding: 6px 14px; border-radius: 8px; border: 1px solid #2a2a4a;
+      background: #1e1e38; color: #c0c0d0; cursor: pointer;
+      font-size: 0.8rem; font-weight: 500; font-family: inherit;
+      transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+    }
+    .top-btn:hover { background: #2a2a4a; color: #fff; border-color: #4a4a6a; }
+    .top-btn.primary { background: #6366f1; color: #fff; border-color: #6366f1; }
+    .top-btn.primary:hover { background: #818cf8; }
+    .top-btn svg { width: 16px; height: 16px; }
+    .back-link { color: #8888aa; font-size: 0.8rem; text-decoration: none; transition: color 0.2s; }
+    .back-link:hover { color: #6366f1; }
+
+    /* ===== TOOLBAR ===== */
+    .toolbar {
+      display: flex; align-items: center; gap: 2px;
+      background: #1e1e38; border-bottom: 1px solid #2a2a4a;
+      padding: 6px 12px; flex-shrink: 0; flex-wrap: wrap;
+      min-height: 44px;
+    }
+    .toolbar-group {
+      display: flex; align-items: center; gap: 2px;
+      padding: 0 6px;
+      border-right: 1px solid #2a2a4a;
+    }
+    .toolbar-group:last-child { border-right: none; }
+    .tool-btn {
+      width: 36px; height: 36px; border-radius: 8px; border: none;
+      background: transparent; color: #a0a0c0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; position: relative;
+    }
+    .tool-btn:hover { background: #2a2a4a; color: #fff; }
+    .tool-btn.active { background: #6366f1; color: #fff; }
+    .tool-btn svg { width: 18px; height: 18px; }
+    .tool-btn .tool-tip {
+      position: absolute; bottom: calc(100% + 6px); left: 50%;
+      transform: translateX(-50%); padding: 4px 10px; border-radius: 6px;
+      background: #0a0a1a; color: #fff; font-size: 0.7rem; white-space: nowrap;
+      pointer-events: none; opacity: 0; transition: opacity 0.15s;
+    }
+    .tool-btn:hover .tool-tip { opacity: 1; }
+
+    /* Toolbar inputs */
+    .tool-select, .tool-input {
+      padding: 4px 8px; border-radius: 6px; border: 1px solid #2a2a4a;
+      background: #16162a; color: #c0c0d0; font-size: 0.78rem; font-family: inherit;
+      cursor: pointer;
+    }
+    .tool-select { padding-right: 4px; }
+    .tool-input { width: 50px; text-align: center; }
+    .tool-color {
+      width: 28px; height: 28px; border-radius: 6px; border: 2px solid #2a2a4a;
+      cursor: pointer; padding: 0; background: none;
+    }
+    .tool-color::-webkit-color-swatch-wrapper { padding: 0; }
+    .tool-color::-webkit-color-swatch { border: none; border-radius: 4px; }
+    .toolbar-label { font-size: 0.7rem; color: #6a6a8a; font-weight: 500; margin: 0 4px; }
+
+    /* ===== MAIN WORKSPACE ===== */
+    .workspace {
+      display: flex; flex: 1; overflow: hidden; position: relative;
+    }
+
+    /* Sidebar - Page Thumbnails */
+    .sidebar {
+      width: 160px; background: #16162a; border-right: 1px solid #2a2a4a;
+      overflow-y: auto; flex-shrink: 0; padding: 12px 8px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 2px; }
+    .sidebar-title {
+      font-size: 0.7rem; font-weight: 600; color: #6a6a8a;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 10px; padding: 0 4px;
+    }
+    .thumb-item {
+      margin-bottom: 8px; cursor: pointer; border-radius: 8px;
+      border: 2px solid transparent; padding: 4px; transition: all 0.2s;
+      position: relative;
+    }
+    .thumb-item:hover { border-color: #4a4a6a; }
+    .thumb-item.active { border-color: #6366f1; }
+    .thumb-item canvas { width: 100%; border-radius: 4px; display: block; }
+    .thumb-num {
+      text-align: center; font-size: 0.7rem; color: #6a6a8a;
+      margin-top: 2px; font-weight: 500;
+    }
+
+    /* Canvas Area */
+    .canvas-area {
+      flex: 1; overflow: auto; display: flex; align-items: flex-start;
+      justify-content: center; padding: 20px;
+      background: #12122a;
+      position: relative;
+    }
+    .canvas-area::-webkit-scrollbar { width: 8px; height: 8px; }
+    .canvas-area::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 4px; }
+    .canvas-area::-webkit-scrollbar-track { background: #16162a; }
+
+    .page-container {
+      position: relative; box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      background: #fff;
+    }
+    .page-container canvas { display: block; }
+    .annotation-layer {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      cursor: crosshair;
+    }
+    .annotation-layer.mode-select { cursor: default; }
+    .annotation-layer.mode-text { cursor: text; }
+    .annotation-layer.mode-draw { cursor: crosshair; }
+    .annotation-layer.mode-highlight { cursor: crosshair; }
+    .annotation-layer.mode-shape { cursor: crosshair; }
+    .annotation-layer.mode-eraser { cursor: cell; }
+
+    /* Annotation Elements */
+    .anno-text {
+      position: absolute; padding: 4px 8px; border: 1px dashed transparent;
+      cursor: move; min-width: 20px; min-height: 20px; outline: none;
+      word-break: break-word; white-space: pre-wrap; line-height: 1.4;
+    }
+    .anno-text:focus, .anno-text.selected { border-color: #6366f1; }
+    .anno-text .delete-btn {
+      position: absolute; top: -12px; right: -12px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #ef4444; color: #fff; border: none;
+      cursor: pointer; display: none; align-items: center;
+      justify-content: center; font-size: 10px; line-height: 1;
+    }
+    .anno-text:focus .delete-btn, .anno-text.selected .delete-btn { display: flex; }
+
+    .anno-image {
+      position: absolute; border: 1px dashed transparent; cursor: move;
+    }
+    .anno-image img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .anno-image:hover, .anno-image.selected { border-color: #6366f1; }
+    .anno-image .delete-btn {
+      position: absolute; top: -12px; right: -12px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #ef4444; color: #fff; border: none;
+      cursor: pointer; display: none; align-items: center;
+      justify-content: center; font-size: 10px; line-height: 1;
+    }
+    .anno-image:hover .delete-btn, .anno-image.selected .delete-btn { display: flex; }
+    .anno-image .resize-handle {
+      position: absolute; bottom: -4px; right: -4px;
+      width: 12px; height: 12px; background: #6366f1;
+      border-radius: 2px; cursor: nwse-resize;
+      display: none;
+    }
+    .anno-image:hover .resize-handle, .anno-image.selected .resize-handle { display: block; }
+
+    /* Draw Canvas */
+    .draw-canvas {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+    }
+    .draw-canvas.active { pointer-events: auto; }
+
+    /* ===== UPLOAD SCREEN ===== */
+    .upload-screen {
+      position: fixed; inset: 0; z-index: 2000;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #16162a 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .upload-screen.hidden { display: none; }
+    .upload-box {
+      text-align: center; max-width: 600px; padding: 40px;
+    }
+    .upload-box .upload-icon {
+      width: 120px; height: 120px; border-radius: 24px;
+      background: linear-gradient(135deg, #1e1b4b, #4338ca);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 32px; box-shadow: 0 20px 60px rgba(99,102,241,0.2);
+    }
+    .upload-box .upload-icon svg { width: 56px; height: 56px; color: #fff; }
+    .upload-box h1 {
+      font-size: 2.2rem; font-weight: 800; margin-bottom: 12px;
+      background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .upload-box p { color: #6a6a8a; font-size: 1rem; margin-bottom: 36px; line-height: 1.7; }
+    .upload-drop-zone {
+      border: 2px dashed #2a2a4a; border-radius: 20px;
+      padding: 48px 40px; cursor: pointer;
+      transition: all 0.3s ease; position: relative;
+    }
+    .upload-drop-zone:hover, .upload-drop-zone.dragover {
+      border-color: #6366f1; background: rgba(99,102,241,0.05);
+    }
+    .upload-drop-zone .drop-icon { margin-bottom: 16px; color: #4a4a6a; }
+    .upload-drop-zone .drop-icon svg { width: 48px; height: 48px; }
+    .upload-drop-zone .drop-text { font-size: 1.1rem; font-weight: 600; color: #c0c0d0; margin-bottom: 8px; }
+    .upload-drop-zone .drop-sub { font-size: 0.85rem; color: #5a5a7a; }
+    .upload-drop-zone .drop-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px; border-radius: 12px; margin-top: 20px;
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      color: #fff; font-size: 0.95rem; font-weight: 600;
+      border: none; cursor: pointer; transition: all 0.2s;
+      font-family: inherit;
+    }
+    .upload-drop-zone .drop-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.3); }
+    .upload-drop-zone input[type="file"] { display: none; }
+    .upload-back {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 28px; color: #5a5a7a; font-size: 0.9rem;
+      text-decoration: none; transition: color 0.2s;
+    }
+    .upload-back:hover { color: #6366f1; }
+
+    /* ===== STATUS BAR ===== */
+    .status-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #16162a; border-top: 1px solid #2a2a4a;
+      padding: 4px 16px; height: 28px; flex-shrink: 0;
+      font-size: 0.72rem; color: #6a6a8a;
+    }
+    .status-bar .zoom-controls {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .zoom-btn {
+      width: 22px; height: 22px; border-radius: 4px; border: none;
+      background: transparent; color: #8a8aaa; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .zoom-btn:hover { background: #2a2a4a; color: #fff; }
+    .zoom-label { min-width: 36px; text-align: center; font-weight: 500; }
+
+    /* ===== PROPERTIES PANEL ===== */
+    .props-panel {
+      width: 240px; background: #16162a; border-left: 1px solid #2a2a4a;
+      overflow-y: auto; flex-shrink: 0; padding: 16px;
+      display: none;
+    }
+    .props-panel.visible { display: block; }
+    .props-title {
+      font-size: 0.75rem; font-weight: 600; color: #6a6a8a;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
+    }
+    .props-group { margin-bottom: 16px; }
+    .props-group label {
+      display: block; font-size: 0.75rem; color: #8a8aaa;
+      margin-bottom: 6px; font-weight: 500;
+    }
+    .props-group input, .props-group select {
+      width: 100%; padding: 6px 10px; border-radius: 6px;
+      border: 1px solid #2a2a4a; background: #1a1a2e;
+      color: #c0c0d0; font-size: 0.8rem; font-family: inherit;
+    }
+
+    /* ===== LOADING ===== */
+    .loading-overlay {
+      position: fixed; inset: 0; z-index: 3000;
+      background: rgba(10,10,26,0.9); display: none;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .loading-overlay.visible { display: flex; }
+    .loading-spinner {
+      width: 48px; height: 48px; border: 3px solid #2a2a4a;
+      border-top-color: #6366f1; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: #8a8aaa; font-size: 0.9rem; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .props-panel { display: none !important; }
+      .toolbar { overflow-x: auto; flex-wrap: nowrap; }
+      .top-bar-left .file-name { display: none; }
+    }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 4000;
+      background: rgba(10,10,26,0.8); display: none;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.visible { display: flex; }
+    .modal {
+      background: #1e1e38; border: 1px solid #2a2a4a;
+      border-radius: 16px; padding: 32px; max-width: 480px; width: 90%;
+    }
+    .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+    .modal p { color: #8a8aaa; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.6; }
+    .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+    .modal-btn {
+      padding: 8px 20px; border-radius: 8px; border: 1px solid #2a2a4a;
+      background: #1a1a2e; color: #c0c0d0; cursor: pointer;
+      font-size: 0.85rem; font-family: inherit; font-weight: 500;
+      transition: all 0.15s;
+    }
+    .modal-btn:hover { background: #2a2a4a; }
+    .modal-btn.primary { background: #6366f1; color: #fff; border-color: #6366f1; }
+    .modal-btn.primary:hover { background: #818cf8; }
+    .modal-btn.danger { background: #ef4444; color: #fff; border-color: #ef4444; }
+
+    /* Signature pad */
+    .sig-canvas {
+      width: 100%; height: 150px; border: 1px solid #2a2a4a;
+      border-radius: 8px; background: #fff; cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- UPLOAD SCREEN -->
+  <div class="upload-screen" id="uploadScreen">
+    <div class="upload-box">
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+      </div>
+      <h1>PDF Editor</h1>
+      <p>Open any PDF file to start editing. Add text, draw, highlight, insert images, shapes, signatures and more - just like WPS Office.</p>
+      <div class="upload-drop-zone" id="dropZone">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="drop-text">Drop your PDF here</div>
+        <div class="drop-sub">or click to browse files</div>
+        <button class="drop-btn" id="browseBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+          Choose PDF File
+        </button>
+        <input type="file" id="fileInput" accept=".pdf,application/pdf">
+      </div>
+      <a href="index.html" class="upload-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Back to Home
+      </a>
+    </div>
+  </div>
+
+  <!-- LOADING OVERLAY -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Loading PDF...</div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div class="app" id="mainApp" style="display:none;">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <a href="index.html" class="back-link" title="Back to Home">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        </a>
+        <span class="logo">PDF Editor</span>
+        <span class="file-name" id="fileName">Untitled.pdf</span>
+      </div>
+      <div class="top-bar-right">
+        <button class="top-btn" id="openNewBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+          Open
+        </button>
+        <button class="top-btn" id="undoBtn" title="Undo (Ctrl+Z)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        </button>
+        <button class="top-btn" id="redoBtn" title="Redo (Ctrl+Y)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+        </button>
+        <button class="top-btn primary" id="saveBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Save PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar" id="toolbar">
+      <!-- Selection & Hand -->
+      <div class="toolbar-group">
+        <button class="tool-btn active" data-tool="select" title="Select">
+          <span class="tool-tip">Select (V)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="hand" title="Hand/Pan">
+          <span class="tool-tip">Hand (H)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-4 0v1a2 2 0 0 0-4 0v1a2 2 0 0 0-4 0v5l-1.8-1.8a1.72 1.72 0 0 0-2.43 0 1.72 1.72 0 0 0 0 2.43L8 20h12V11z"/></svg>
+        </button>
+      </div>
+
+      <!-- Text Tools -->
+      <div class="toolbar-group">
+        <button class="tool-btn" data-tool="text" title="Add Text">
+          <span class="tool-tip">Text (T)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        </button>
+        <select class="tool-select" id="fontFamily" title="Font Family">
+          <option value="Helvetica">Helvetica</option>
+          <option value="Times-Roman">Times</option>
+          <option value="Courier">Courier</option>
+          <option value="Arial">Arial</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Verdana">Verdana</option>
+        </select>
+        <input class="tool-input" type="number" id="fontSize" value="16" min="6" max="120" title="Font Size">
+        <button class="tool-btn" id="boldBtn" title="Bold">
+          <span class="tool-tip">Bold (B)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+        </button>
+        <button class="tool-btn" id="italicBtn" title="Italic">
+          <span class="tool-tip">Italic (I)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+        </button>
+      </div>
+
+      <!-- Drawing Tools -->
+      <div class="toolbar-group">
+        <button class="tool-btn" data-tool="draw" title="Freehand Draw">
+          <span class="tool-tip">Draw (D)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="highlight" title="Highlighter">
+          <span class="tool-tip">Highlight (G)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-6 6v3h9l3-3"/><path d="M22 12l-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="eraser" title="Eraser">
+          <span class="tool-tip">Eraser (E)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16a1 1 0 0 1 0-1.4l9.6-9.6a2 2 0 0 1 2.8 0l5.6 5.6a2 2 0 0 1 0 2.8L15 20"/></svg>
+        </button>
+        <input class="tool-input" type="number" id="strokeWidth" value="3" min="1" max="20" title="Stroke Width">
+      </div>
+
+      <!-- Shapes -->
+      <div class="toolbar-group">
+        <button class="tool-btn" data-tool="rect" title="Rectangle">
+          <span class="tool-tip">Rectangle (R)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="circle" title="Circle">
+          <span class="tool-tip">Circle (C)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="line" title="Line">
+          <span class="tool-tip">Line (L)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
+        </button>
+        <button class="tool-btn" data-tool="arrow" title="Arrow">
+          <span class="tool-tip">Arrow (A)</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+
+      <!-- Color & Insert -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">Color</span>
+        <input type="color" class="tool-color" id="colorPicker" value="#000000" title="Stroke/Text Color">
+        <span class="toolbar-label">Fill</span>
+        <input type="color" class="tool-color" id="fillPicker" value="#ffffff" title="Fill Color">
+        <button class="tool-btn" id="noFillBtn" title="Toggle Fill (No Fill)">
+          <span class="tool-tip">No Fill</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        </button>
+      </div>
+
+      <!-- Insert -->
+      <div class="toolbar-group">
+        <button class="tool-btn" id="insertImageBtn" title="Insert Image">
+          <span class="tool-tip">Image</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </button>
+        <button class="tool-btn" id="signatureBtn" title="Add Signature">
+          <span class="tool-tip">Signature</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 19.5v.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8.5L18 5.5"/><path d="M16 2v4h4"/><path d="M8 18c2-2 3.5-4 5-4s2 1.5 3.5 3c1.5 1.5 2 1 2.5.5"/></svg>
+        </button>
+        <button class="tool-btn" id="stickyNoteBtn" title="Sticky Note">
+          <span class="tool-tip">Note</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+        </button>
+      </div>
+
+      <!-- Page Management -->
+      <div class="toolbar-group">
+        <button class="tool-btn" id="rotatePageBtn" title="Rotate Page">
+          <span class="tool-tip">Rotate Page</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38L21.5 8"/></svg>
+        </button>
+        <button class="tool-btn" id="deletePageBtn" title="Delete Page">
+          <span class="tool-tip">Delete Page</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div class="workspace">
+      <!-- Sidebar: Page Thumbnails -->
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-title">Pages</div>
+        <div id="thumbContainer"></div>
+      </div>
+
+      <!-- Canvas Area -->
+      <div class="canvas-area" id="canvasArea">
+        <div class="page-container" id="pageContainer">
+          <canvas id="pdfCanvas"></canvas>
+          <canvas class="draw-canvas" id="drawCanvas"></canvas>
+          <div class="annotation-layer mode-select" id="annotationLayer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <span id="pageInfo">Page 1 of 1</span>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <span class="zoom-label" id="zoomLabel">100%</span>
+        <button class="zoom-btn" id="zoomInBtn" title="Zoom In">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="zoom-btn" id="zoomFitBtn" title="Fit Width">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+      </div>
+      <span id="toolStatus">Select Tool</span>
+    </div>
+  </div>
+
+  <!-- SIGNATURE MODAL -->
+  <div class="modal-overlay" id="sigModal">
+    <div class="modal">
+      <h3>Draw Your Signature</h3>
+      <p>Draw your signature in the box below. It will be placed on the current page.</p>
+      <canvas class="sig-canvas" id="sigCanvas"></canvas>
+      <div class="modal-btns" style="margin-top:16px;">
+        <button class="modal-btn" id="sigClear">Clear</button>
+        <button class="modal-btn" id="sigCancel">Cancel</button>
+        <button class="modal-btn primary" id="sigApply">Apply Signature</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE PAGE MODAL -->
+  <div class="modal-overlay" id="deletePageModal">
+    <div class="modal">
+      <h3>Delete This Page?</h3>
+      <p>Are you sure you want to delete page <span id="deletePageNum">1</span>? This action cannot be undone.</p>
+      <div class="modal-btns">
+        <button class="modal-btn" id="deletePageCancel">Cancel</button>
+        <button class="modal-btn danger" id="deletePageConfirm">Delete Page</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file inputs -->
+  <input type="file" id="imageInput" accept="image/*" style="display:none;">
+  <input type="file" id="newFileInput" accept=".pdf,application/pdf" style="display:none;">
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ===== STATE =====
+    let pdfDoc = null;           // pdf.js document
+    let pdfBytes = null;         // raw PDF bytes for pdf-lib
+    let currentPage = 1;
+    let totalPages = 0;
+    let scale = 1.0;
+    let currentTool = 'select';
+    let isBold = false;
+    let isItalic = false;
+    let useFill = false;
+    let annotations = {};        // per-page annotations: { pageNum: [...] }
+    let drawPaths = {};          // per-page draw data: { pageNum: ImageData }
+    let undoStack = [];
+    let redoStack = [];
+    let isDragging = false;
+    let dragTarget = null;
+    let dragOffsetX = 0, dragOffsetY = 0;
+    let isDrawing = false;
+    let drawStartX = 0, drawStartY = 0;
+    let shapePreview = null;
+
+    // ===== DOM ELEMENTS =====
+    const uploadScreen = document.getElementById('uploadScreen');
+    const mainApp = document.getElementById('mainApp');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const browseBtn = document.getElementById('browseBtn');
+    const pdfCanvas = document.getElementById('pdfCanvas');
+    const drawCanvas = document.getElementById('drawCanvas');
+    const annotationLayer = document.getElementById('annotationLayer');
+    const pageContainer = document.getElementById('pageContainer');
+    const canvasArea = document.getElementById('canvasArea');
+    const thumbContainer = document.getElementById('thumbContainer');
+    const fileNameEl = document.getElementById('fileName');
+    const pageInfoEl = document.getElementById('pageInfo');
+    const zoomLabel = document.getElementById('zoomLabel');
+    const toolStatus = document.getElementById('toolStatus');
+
+    const pdfCtx = pdfCanvas.getContext('2d');
+    const drawCtx = drawCanvas.getContext('2d');
+
+    // ===== FILE UPLOAD =====
+    browseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => { if (e.target.files[0]) loadPDF(e.target.files[0]); });
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault(); dropZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') loadPDF(file);
+    });
+
+    document.getElementById('openNewBtn').addEventListener('click', () => {
+      document.getElementById('newFileInput').click();
+    });
+    document.getElementById('newFileInput').addEventListener('change', (e) => {
+      if (e.target.files[0]) loadPDF(e.target.files[0]);
+    });
+
+    // ===== LOAD PDF =====
+    async function loadPDF(file) {
+      showLoading('Loading PDF...');
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        pdfBytes = new Uint8Array(arrayBuffer);
+        pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise;
+        totalPages = pdfDoc.numPages;
+        currentPage = 1;
+        annotations = {};
+        drawPaths = {};
+        undoStack = [];
+        redoStack = [];
+
+        fileNameEl.textContent = file.name;
+        document.title = file.name + ' - PDF Editor';
+
+        uploadScreen.classList.add('hidden');
+        mainApp.style.display = 'flex';
+
+        await renderPage(currentPage);
+        await renderThumbnails();
+        hideLoading();
+      } catch (err) {
+        hideLoading();
+        alert('Error loading PDF: ' + err.message);
+      }
+    }
+
+    // ===== RENDER PAGE =====
+    async function renderPage(pageNum) {
+      const page = await pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: scale * 1.5 });
+
+      pdfCanvas.width = viewport.width;
+      pdfCanvas.height = viewport.height;
+      drawCanvas.width = viewport.width;
+      drawCanvas.height = viewport.height;
+
+      pageContainer.style.width = viewport.width + 'px';
+      pageContainer.style.height = viewport.height + 'px';
+
+      await page.render({ canvasContext: pdfCtx, viewport: viewport }).promise;
+
+      // Restore draw data for this page
+      if (drawPaths[pageNum]) {
+        drawCtx.putImageData(drawPaths[pageNum], 0, 0);
+      } else {
+        drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      }
+
+      // Restore annotations
+      restoreAnnotations(pageNum);
+
+      pageInfoEl.textContent = `Page ${pageNum} of ${totalPages}`;
+      zoomLabel.textContent = Math.round(scale * 100) + '%';
+
+      // Update thumbnail active state
+      document.querySelectorAll('.thumb-item').forEach((t, i) => {
+        t.classList.toggle('active', i + 1 === pageNum);
+      });
+    }
+
+    // ===== RENDER THUMBNAILS =====
+    async function renderThumbnails() {
+      thumbContainer.innerHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const vp = page.getViewport({ scale: 0.25 });
+        const canvas = document.createElement('canvas');
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+        const item = document.createElement('div');
+        item.className = 'thumb-item' + (i === currentPage ? ' active' : '');
+        item.appendChild(canvas);
+        const num = document.createElement('div');
+        num.className = 'thumb-num';
+        num.textContent = i;
+        item.appendChild(num);
+        item.addEventListener('click', () => goToPage(i));
+        thumbContainer.appendChild(item);
+      }
+    }
+
+    async function goToPage(num) {
+      saveCurrentPageData();
+      currentPage = num;
+      await renderPage(currentPage);
+    }
+
+    // ===== SAVE CURRENT PAGE DATA =====
+    function saveCurrentPageData() {
+      // Save draw canvas data
+      drawPaths[currentPage] = drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+      // Save annotations
+      saveAnnotations(currentPage);
+    }
+
+    function saveAnnotations(pageNum) {
+      const annos = annotationLayer.querySelectorAll('.anno-text, .anno-image');
+      annotations[pageNum] = [];
+      annos.forEach(el => {
+        if (el.classList.contains('anno-text')) {
+          annotations[pageNum].push({
+            type: 'text',
+            x: parseFloat(el.style.left),
+            y: parseFloat(el.style.top),
+            text: el.innerText,
+            fontSize: el.style.fontSize,
+            fontFamily: el.style.fontFamily,
+            color: el.style.color,
+            fontWeight: el.style.fontWeight,
+            fontStyle: el.style.fontStyle
+          });
+        } else if (el.classList.contains('anno-image')) {
+          const img = el.querySelector('img');
+          annotations[pageNum].push({
+            type: 'image',
+            x: parseFloat(el.style.left),
+            y: parseFloat(el.style.top),
+            w: parseFloat(el.style.width),
+            h: parseFloat(el.style.height),
+            src: img ? img.src : ''
+          });
+        }
+      });
+    }
+
+    function restoreAnnotations(pageNum) {
+      annotationLayer.innerHTML = '';
+      if (!annotations[pageNum]) return;
+      annotations[pageNum].forEach(a => {
+        if (a.type === 'text') {
+          createTextAnnotation(a.x, a.y, a.text, a.fontSize, a.fontFamily, a.color, a.fontWeight, a.fontStyle);
+        } else if (a.type === 'image') {
+          createImageAnnotation(a.x, a.y, a.w, a.h, a.src);
+        }
+      });
+    }
+
+    // ===== TOOL SWITCHING =====
+    const toolBtns = document.querySelectorAll('.tool-btn[data-tool]');
+    toolBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setTool(btn.dataset.tool);
+      });
+    });
+
+    function setTool(tool) {
+      currentTool = tool;
+      toolBtns.forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
+
+      // Update cursor
+      const layer = annotationLayer;
+      layer.className = 'annotation-layer mode-' + tool;
+
+      // Enable/disable draw canvas
+      drawCanvas.classList.toggle('active', ['draw', 'highlight', 'eraser'].includes(tool));
+
+      const toolNames = {
+        select: 'Select Tool', hand: 'Hand/Pan Tool', text: 'Text Tool',
+        draw: 'Freehand Draw', highlight: 'Highlighter', eraser: 'Eraser',
+        rect: 'Rectangle', circle: 'Circle', line: 'Line', arrow: 'Arrow'
+      };
+      toolStatus.textContent = toolNames[tool] || tool;
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.isContentEditable) return;
+      const key = e.key.toLowerCase();
+      if (key === 'v') setTool('select');
+      else if (key === 'h') setTool('hand');
+      else if (key === 't') setTool('text');
+      else if (key === 'd') setTool('draw');
+      else if (key === 'g') setTool('highlight');
+      else if (key === 'e') setTool('eraser');
+      else if (key === 'r') setTool('rect');
+      else if (key === 'c') setTool('circle');
+      else if (key === 'l') setTool('line');
+      else if (key === 'a') setTool('arrow');
+      else if (e.ctrlKey && key === 'z') { e.preventDefault(); undo(); }
+      else if (e.ctrlKey && key === 'y') { e.preventDefault(); redo(); }
+      else if (e.ctrlKey && key === 's') { e.preventDefault(); savePDF(); }
+      else if (key === 'delete' || key === 'backspace') {
+        if (document.querySelector('.anno-text.selected, .anno-image.selected')) {
+          const sel = document.querySelector('.anno-text.selected, .anno-image.selected');
+          if (sel && !sel.isContentEditable) {
+            pushUndo();
+            sel.remove();
+          }
+        }
+      }
+    });
+
+    // ===== TEXT ANNOTATIONS =====
+    annotationLayer.addEventListener('dblclick', (e) => {
+      if (currentTool === 'text' || currentTool === 'select') {
+        const rect = annotationLayer.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        pushUndo();
+        const el = createTextAnnotation(x, y, '', null, null, null, null, null);
+        el.focus();
+      }
+    });
+
+    annotationLayer.addEventListener('click', (e) => {
+      if (currentTool === 'text' && e.target === annotationLayer) {
+        const rect = annotationLayer.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        pushUndo();
+        const el = createTextAnnotation(x, y, '', null, null, null, null, null);
+        el.focus();
+      }
+    });
+
+    function createTextAnnotation(x, y, text, fontSize, fontFamily, color, fontWeight, fontStyle) {
+      const el = document.createElement('div');
+      el.className = 'anno-text';
+      el.contentEditable = true;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.fontSize = fontSize || document.getElementById('fontSize').value + 'px';
+      el.style.fontFamily = fontFamily || document.getElementById('fontFamily').value;
+      el.style.color = color || document.getElementById('colorPicker').value;
+      el.style.fontWeight = fontWeight || (isBold ? 'bold' : 'normal');
+      el.style.fontStyle = fontStyle || (isItalic ? 'italic' : 'normal');
+      if (text) el.innerText = text;
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-btn';
+      delBtn.innerHTML = '&times;';
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        pushUndo();
+        el.remove();
+      });
+      el.appendChild(delBtn);
+
+      // Dragging
+      el.addEventListener('mousedown', (e) => {
+        if (currentTool === 'select' && !el.isContentEditable) {
+          isDragging = true;
+          dragTarget = el;
+          const rect = el.getBoundingClientRect();
+          dragOffsetX = e.clientX - rect.left;
+          dragOffsetY = e.clientY - rect.top;
+          el.classList.add('selected');
+          e.preventDefault();
+        }
+      });
+
+      el.addEventListener('focus', () => {
+        document.querySelectorAll('.anno-text, .anno-image').forEach(a => a.classList.remove('selected'));
+        el.classList.add('selected');
+      });
+
+      el.addEventListener('blur', () => {
+        if (!el.innerText.trim() && !el.querySelector('img')) {
+          el.remove();
+        }
+      });
+
+      annotationLayer.appendChild(el);
+      return el;
+    }
+
+    // ===== IMAGE ANNOTATIONS =====
+    document.getElementById('insertImageBtn').addEventListener('click', () => {
+      document.getElementById('imageInput').click();
+    });
+
+    document.getElementById('imageInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        pushUndo();
+        createImageAnnotation(50, 50, 200, 150, ev.target.result);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    });
+
+    function createImageAnnotation(x, y, w, h, src) {
+      const el = document.createElement('div');
+      el.className = 'anno-image';
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.width = w + 'px';
+      el.style.height = h + 'px';
+
+      const img = document.createElement('img');
+      img.src = src;
+      el.appendChild(img);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-btn';
+      delBtn.innerHTML = '&times;';
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        pushUndo();
+        el.remove();
+      });
+      el.appendChild(delBtn);
+
+      // Resize handle
+      const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'resize-handle';
+      el.appendChild(resizeHandle);
+
+      // Drag
+      el.addEventListener('mousedown', (e) => {
+        if (e.target === resizeHandle) return;
+        if (currentTool === 'select') {
+          isDragging = true;
+          dragTarget = el;
+          const rect = el.getBoundingClientRect();
+          dragOffsetX = e.clientX - rect.left;
+          dragOffsetY = e.clientY - rect.top;
+          el.classList.add('selected');
+          e.preventDefault();
+        }
+      });
+
+      // Resize
+      let isResizing = false;
+      resizeHandle.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        isResizing = true;
+        const startW = parseFloat(el.style.width);
+        const startH = parseFloat(el.style.height);
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const ratio = startW / startH;
+
+        function onMove(ev) {
+          const dx = ev.clientX - startX;
+          const dy = ev.clientY - startY;
+          const newW = Math.max(40, startW + dx);
+          el.style.width = newW + 'px';
+          el.style.height = (newW / ratio) + 'px';
+        }
+        function onUp() {
+          isResizing = false;
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+
+      annotationLayer.appendChild(el);
+      return el;
+    }
+
+    // Global mouse events for dragging
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging && dragTarget) {
+        const rect = annotationLayer.getBoundingClientRect();
+        dragTarget.style.left = (e.clientX - rect.left - dragOffsetX) + 'px';
+        dragTarget.style.top = (e.clientY - rect.top - dragOffsetY) + 'px';
+      }
+    });
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      dragTarget = null;
+    });
+
+    // Deselect on click on empty area
+    annotationLayer.addEventListener('mousedown', (e) => {
+      if (e.target === annotationLayer && currentTool === 'select') {
+        document.querySelectorAll('.anno-text, .anno-image').forEach(a => a.classList.remove('selected'));
+      }
+    });
+
+    // ===== DRAWING (Freehand, Highlight, Eraser) =====
+    drawCanvas.addEventListener('mousedown', startDraw);
+    drawCanvas.addEventListener('mousemove', moveDraw);
+    drawCanvas.addEventListener('mouseup', endDraw);
+    drawCanvas.addEventListener('mouseleave', endDraw);
+
+    // Touch support
+    drawCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(touchToMouse(e)); });
+    drawCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); moveDraw(touchToMouse(e)); });
+    drawCanvas.addEventListener('touchend', (e) => { e.preventDefault(); endDraw(touchToMouse(e)); });
+
+    function touchToMouse(e) {
+      const t = e.touches[0] || e.changedTouches[0];
+      return { clientX: t.clientX, clientY: t.clientY, target: e.target };
+    }
+
+    function startDraw(e) {
+      if (!['draw', 'highlight', 'eraser'].includes(currentTool)) return;
+      isDrawing = true;
+      pushUndo();
+
+      const rect = drawCanvas.getBoundingClientRect();
+      const scaleX = drawCanvas.width / rect.width;
+      const scaleY = drawCanvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+
+      drawCtx.beginPath();
+      drawCtx.moveTo(x, y);
+
+      if (currentTool === 'eraser') {
+        drawCtx.globalCompositeOperation = 'destination-out';
+        drawCtx.lineWidth = parseInt(document.getElementById('strokeWidth').value) * 3;
+      } else if (currentTool === 'highlight') {
+        drawCtx.globalCompositeOperation = 'multiply';
+        drawCtx.strokeStyle = document.getElementById('colorPicker').value + '80';
+        drawCtx.lineWidth = parseInt(document.getElementById('strokeWidth').value) * 4;
+      } else {
+        drawCtx.globalCompositeOperation = 'source-over';
+        drawCtx.strokeStyle = document.getElementById('colorPicker').value;
+        drawCtx.lineWidth = parseInt(document.getElementById('strokeWidth').value);
+      }
+      drawCtx.lineCap = 'round';
+      drawCtx.lineJoin = 'round';
+    }
+
+    function moveDraw(e) {
+      if (!isDrawing) return;
+      const rect = drawCanvas.getBoundingClientRect();
+      const scaleX = drawCanvas.width / rect.width;
+      const scaleY = drawCanvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      drawCtx.lineTo(x, y);
+      drawCtx.stroke();
+    }
+
+    function endDraw() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      drawCtx.globalCompositeOperation = 'source-over';
+      // Save draw data
+      drawPaths[currentPage] = drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+    }
+
+    // ===== SHAPES (drawn on annotation layer with SVG or on draw canvas) =====
+    annotationLayer.addEventListener('mousedown', startShape);
+    annotationLayer.addEventListener('mousemove', moveShape);
+    annotationLayer.addEventListener('mouseup', endShape);
+
+    function startShape(e) {
+      if (!['rect', 'circle', 'line', 'arrow'].includes(currentTool)) return;
+      if (e.target !== annotationLayer) return;
+      isDrawing = true;
+      pushUndo();
+      const rect = annotationLayer.getBoundingClientRect();
+      drawStartX = e.clientX - rect.left;
+      drawStartY = e.clientY - rect.top;
+
+      // Create SVG preview
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
+      annotationLayer.appendChild(svg);
+      shapePreview = svg;
+    }
+
+    function moveShape(e) {
+      if (!isDrawing || !shapePreview) return;
+      if (!['rect', 'circle', 'line', 'arrow'].includes(currentTool)) return;
+      const rect = annotationLayer.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const color = document.getElementById('colorPicker').value;
+      const strokeW = document.getElementById('strokeWidth').value;
+      const fillColor = useFill ? document.getElementById('fillPicker').value : 'none';
+
+      shapePreview.innerHTML = '';
+
+      if (currentTool === 'rect') {
+        const x = Math.min(drawStartX, mx), y = Math.min(drawStartY, my);
+        const w = Math.abs(mx - drawStartX), h = Math.abs(my - drawStartY);
+        shapePreview.innerHTML = `<rect x="${x}" y="${y}" width="${w}" height="${h}" stroke="${color}" fill="${fillColor}" stroke-width="${strokeW}"/>`;
+      } else if (currentTool === 'circle') {
+        const cx = (drawStartX + mx) / 2, cy = (drawStartY + my) / 2;
+        const rx = Math.abs(mx - drawStartX) / 2, ry = Math.abs(my - drawStartY) / 2;
+        shapePreview.innerHTML = `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" stroke="${color}" fill="${fillColor}" stroke-width="${strokeW}"/>`;
+      } else if (currentTool === 'line') {
+        shapePreview.innerHTML = `<line x1="${drawStartX}" y1="${drawStartY}" x2="${mx}" y2="${my}" stroke="${color}" stroke-width="${strokeW}"/>`;
+      } else if (currentTool === 'arrow') {
+        const markerId = 'arrowhead-' + Date.now();
+        shapePreview.innerHTML = `
+          <defs><marker id="${markerId}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="${color}"/></marker></defs>
+          <line x1="${drawStartX}" y1="${drawStartY}" x2="${mx}" y2="${my}" stroke="${color}" stroke-width="${strokeW}" marker-end="url(#${markerId})"/>`;
+      }
+    }
+
+    function endShape() {
+      if (!isDrawing || !shapePreview) return;
+      if (!['rect', 'circle', 'line', 'arrow'].includes(currentTool)) return;
+      isDrawing = false;
+      // Keep the SVG shape as a permanent annotation
+      shapePreview.style.pointerEvents = 'none';
+      shapePreview = null;
+    }
+
+    // ===== BOLD / ITALIC =====
+    document.getElementById('boldBtn').addEventListener('click', () => {
+      isBold = !isBold;
+      document.getElementById('boldBtn').classList.toggle('active', isBold);
+    });
+    document.getElementById('italicBtn').addEventListener('click', () => {
+      isItalic = !isItalic;
+      document.getElementById('italicBtn').classList.toggle('active', isItalic);
+    });
+
+    // ===== NO FILL TOGGLE =====
+    document.getElementById('noFillBtn').addEventListener('click', () => {
+      useFill = !useFill;
+      document.getElementById('noFillBtn').classList.toggle('active', useFill);
+    });
+
+    // ===== SIGNATURE =====
+    const sigModal = document.getElementById('sigModal');
+    const sigCanvas = document.getElementById('sigCanvas');
+    const sigCtx = sigCanvas.getContext('2d');
+    let sigDrawing = false;
+
+    document.getElementById('signatureBtn').addEventListener('click', () => {
+      sigModal.classList.add('visible');
+      sigCanvas.width = sigCanvas.offsetWidth;
+      sigCanvas.height = sigCanvas.offsetHeight;
+      sigCtx.fillStyle = '#fff';
+      sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+      sigCtx.strokeStyle = '#000';
+      sigCtx.lineWidth = 2;
+      sigCtx.lineCap = 'round';
+    });
+
+    sigCanvas.addEventListener('mousedown', (e) => {
+      sigDrawing = true;
+      sigCtx.beginPath();
+      const r = sigCanvas.getBoundingClientRect();
+      sigCtx.moveTo(e.clientX - r.left, e.clientY - r.top);
+    });
+    sigCanvas.addEventListener('mousemove', (e) => {
+      if (!sigDrawing) return;
+      const r = sigCanvas.getBoundingClientRect();
+      sigCtx.lineTo(e.clientX - r.left, e.clientY - r.top);
+      sigCtx.stroke();
+    });
+    sigCanvas.addEventListener('mouseup', () => sigDrawing = false);
+    sigCanvas.addEventListener('mouseleave', () => sigDrawing = false);
+
+    document.getElementById('sigClear').addEventListener('click', () => {
+      sigCtx.fillStyle = '#fff';
+      sigCtx.fillRect(0, 0, sigCanvas.width, sigCanvas.height);
+    });
+    document.getElementById('sigCancel').addEventListener('click', () => {
+      sigModal.classList.remove('visible');
+    });
+    document.getElementById('sigApply').addEventListener('click', () => {
+      const dataURL = sigCanvas.toDataURL('image/png');
+      pushUndo();
+      createImageAnnotation(50, 50, 200, 80, dataURL);
+      sigModal.classList.remove('visible');
+    });
+
+    // ===== STICKY NOTE =====
+    document.getElementById('stickyNoteBtn').addEventListener('click', () => {
+      pushUndo();
+      const el = createTextAnnotation(80, 80, 'Note...', '14px', 'Inter', '#1e293b', 'normal', 'normal');
+      el.style.background = '#fef3c7';
+      el.style.padding = '12px';
+      el.style.borderRadius = '8px';
+      el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+      el.style.minWidth = '120px';
+      el.style.minHeight = '60px';
+      el.style.border = '1px solid #f59e0b';
+      el.focus();
+    });
+
+    // ===== PAGE MANAGEMENT =====
+    document.getElementById('rotatePageBtn').addEventListener('click', async () => {
+      if (!pdfBytes) return;
+      showLoading('Rotating page...');
+      try {
+        const pdfLibDoc = await PDFLib.PDFDocument.load(pdfBytes);
+        const pages = pdfLibDoc.getPages();
+        const page = pages[currentPage - 1];
+        const currentRotation = page.getRotation().angle;
+        page.setRotation(PDFLib.degrees(currentRotation + 90));
+        pdfBytes = await pdfLibDoc.save();
+        pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise;
+        await renderPage(currentPage);
+        await renderThumbnails();
+        hideLoading();
+      } catch (err) {
+        hideLoading();
+        alert('Error rotating page: ' + err.message);
+      }
+    });
+
+    document.getElementById('deletePageBtn').addEventListener('click', () => {
+      if (totalPages <= 1) { alert('Cannot delete the only page.'); return; }
+      document.getElementById('deletePageNum').textContent = currentPage;
+      document.getElementById('deletePageModal').classList.add('visible');
+    });
+
+    document.getElementById('deletePageCancel').addEventListener('click', () => {
+      document.getElementById('deletePageModal').classList.remove('visible');
+    });
+
+    document.getElementById('deletePageConfirm').addEventListener('click', async () => {
+      document.getElementById('deletePageModal').classList.remove('visible');
+      showLoading('Deleting page...');
+      try {
+        const pdfLibDoc = await PDFLib.PDFDocument.load(pdfBytes);
+        pdfLibDoc.removePage(currentPage - 1);
+        pdfBytes = await pdfLibDoc.save();
+        pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise;
+        totalPages = pdfDoc.numPages;
+        if (currentPage > totalPages) currentPage = totalPages;
+        delete annotations[currentPage];
+        delete drawPaths[currentPage];
+        await renderPage(currentPage);
+        await renderThumbnails();
+        hideLoading();
+      } catch (err) {
+        hideLoading();
+        alert('Error deleting page: ' + err.message);
+      }
+    });
+
+    // ===== ZOOM =====
+    document.getElementById('zoomInBtn').addEventListener('click', () => { setZoom(scale + 0.15); });
+    document.getElementById('zoomOutBtn').addEventListener('click', () => { setZoom(scale - 0.15); });
+    document.getElementById('zoomFitBtn').addEventListener('click', async () => {
+      if (!pdfDoc) return;
+      const page = await pdfDoc.getPage(currentPage);
+      const vp = page.getViewport({ scale: 1.0 });
+      const areaWidth = canvasArea.clientWidth - 40;
+      const newScale = areaWidth / (vp.width * 1.5);
+      setZoom(Math.max(0.25, Math.min(3, newScale)));
+    });
+
+    async function setZoom(newScale) {
+      scale = Math.max(0.25, Math.min(3, newScale));
+      saveCurrentPageData();
+      await renderPage(currentPage);
+    }
+
+    // Mouse wheel zoom
+    canvasArea.addEventListener('wheel', (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        setZoom(scale + delta);
+      }
+    }, { passive: false });
+
+    // ===== UNDO / REDO =====
+    function pushUndo() {
+      saveCurrentPageData();
+      undoStack.push({
+        page: currentPage,
+        annos: JSON.parse(JSON.stringify(annotations)),
+        drawData: drawPaths[currentPage] ? drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height) : null
+      });
+      if (undoStack.length > 50) undoStack.shift();
+      redoStack = [];
+    }
+
+    function undo() {
+      if (undoStack.length === 0) return;
+      const state = undoStack.pop();
+      redoStack.push({
+        page: currentPage,
+        annos: JSON.parse(JSON.stringify(annotations)),
+        drawData: drawPaths[currentPage] ? drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height) : null
+      });
+      annotations = state.annos;
+      if (state.drawData) {
+        drawPaths[state.page] = state.drawData;
+      }
+      restoreAnnotations(currentPage);
+      if (drawPaths[currentPage]) {
+        drawCtx.putImageData(drawPaths[currentPage], 0, 0);
+      } else {
+        drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      }
+    }
+
+    function redo() {
+      if (redoStack.length === 0) return;
+      const state = redoStack.pop();
+      undoStack.push({
+        page: currentPage,
+        annos: JSON.parse(JSON.stringify(annotations)),
+        drawData: drawPaths[currentPage] ? drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height) : null
+      });
+      annotations = state.annos;
+      if (state.drawData) {
+        drawPaths[state.page] = state.drawData;
+      }
+      restoreAnnotations(currentPage);
+      if (drawPaths[currentPage]) {
+        drawCtx.putImageData(drawPaths[currentPage], 0, 0);
+      } else {
+        drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      }
+    }
+
+    document.getElementById('undoBtn').addEventListener('click', undo);
+    document.getElementById('redoBtn').addEventListener('click', redo);
+
+    // ===== SAVE PDF =====
+    document.getElementById('saveBtn').addEventListener('click', savePDF);
+
+    async function savePDF() {
+      if (!pdfBytes) return;
+      showLoading('Saving PDF...');
+      saveCurrentPageData();
+
+      try {
+        const pdfLibDoc = await PDFLib.PDFDocument.load(pdfBytes);
+        const pages = pdfLibDoc.getPages();
+
+        for (let p = 1; p <= totalPages; p++) {
+          const page = pages[p - 1];
+          const { width, height } = page.getSize();
+
+          // Embed draw canvas as image overlay
+          if (drawPaths[p]) {
+            // Create a temp canvas to export
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = drawPaths[p].width;
+            tempCanvas.height = drawPaths[p].height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.putImageData(drawPaths[p], 0, 0);
+            const drawDataURL = tempCanvas.toDataURL('image/png');
+            const drawImageBytes = await fetch(drawDataURL).then(r => r.arrayBuffer());
+            const drawImage = await pdfLibDoc.embedPng(drawImageBytes);
+            page.drawImage(drawImage, {
+              x: 0, y: 0, width: width, height: height,
+              opacity: 1
+            });
+          }
+
+          // Add text annotations
+          if (annotations[p]) {
+            for (const anno of annotations[p]) {
+              if (anno.type === 'text' && anno.text.trim()) {
+                const fs = parseInt(anno.fontSize) || 16;
+                const scaleFactor = width / (pdfCanvas.width || 1);
+                const pdfFontSize = fs * scaleFactor;
+                const x = anno.x * scaleFactor;
+                const y = height - (anno.y * scaleFactor) - pdfFontSize;
+
+                let fontName = PDFLib.StandardFonts.Helvetica;
+                const fontBold = anno.fontWeight === 'bold';
+                const fontItalic = anno.fontStyle === 'italic';
+
+                if (anno.fontFamily && anno.fontFamily.includes('Times')) {
+                  fontName = fontBold && fontItalic ? PDFLib.StandardFonts.TimesRomanBoldItalic
+                    : fontBold ? PDFLib.StandardFonts.TimesRomanBold
+                    : fontItalic ? PDFLib.StandardFonts.TimesRomanItalic
+                    : PDFLib.StandardFonts.TimesRoman;
+                } else if (anno.fontFamily && anno.fontFamily.includes('Courier')) {
+                  fontName = fontBold && fontItalic ? PDFLib.StandardFonts.CourierBoldOblique
+                    : fontBold ? PDFLib.StandardFonts.CourierBold
+                    : fontItalic ? PDFLib.StandardFonts.CourierOblique
+                    : PDFLib.StandardFonts.Courier;
+                } else {
+                  fontName = fontBold && fontItalic ? PDFLib.StandardFonts.HelveticaBoldOblique
+                    : fontBold ? PDFLib.StandardFonts.HelveticaBold
+                    : fontItalic ? PDFLib.StandardFonts.HelveticaOblique
+                    : PDFLib.StandardFonts.Helvetica;
+                }
+
+                const font = await pdfLibDoc.embedFont(fontName);
+                const colorHex = anno.color || '#000000';
+                const r = parseInt(colorHex.slice(1,3), 16) / 255;
+                const g = parseInt(colorHex.slice(3,5), 16) / 255;
+                const b = parseInt(colorHex.slice(5,7), 16) / 255;
+
+                page.drawText(anno.text, {
+                  x: x, y: y, size: pdfFontSize, font: font,
+                  color: PDFLib.rgb(r, g, b)
+                });
+              } else if (anno.type === 'image' && anno.src) {
+                try {
+                  const imgBytes = await fetch(anno.src).then(r => r.arrayBuffer());
+                  let embeddedImg;
+                  if (anno.src.includes('image/png') || anno.src.includes('.png')) {
+                    embeddedImg = await pdfLibDoc.embedPng(imgBytes);
+                  } else {
+                    embeddedImg = await pdfLibDoc.embedJpg(imgBytes);
+                  }
+                  const scaleFactor = width / (pdfCanvas.width || 1);
+                  page.drawImage(embeddedImg, {
+                    x: anno.x * scaleFactor,
+                    y: height - (anno.y * scaleFactor) - (anno.h * scaleFactor),
+                    width: anno.w * scaleFactor,
+                    height: anno.h * scaleFactor
+                  });
+                } catch (imgErr) {
+                  console.warn('Could not embed image:', imgErr);
+                }
+              }
+            }
+          }
+        }
+
+        const savedBytes = await pdfLibDoc.save();
+        const blob = new Blob([savedBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileNameEl.textContent || 'edited.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+        hideLoading();
+      } catch (err) {
+        hideLoading();
+        alert('Error saving PDF: ' + err.message);
+        console.error(err);
+      }
+    }
+
+    // ===== HELPERS =====
+    function showLoading(text) {
+      loadingText.textContent = text || 'Loading...';
+      loadingOverlay.classList.add('visible');
+    }
+    function hideLoading() { loadingOverlay.classList.remove('visible'); }
+
+  })();
+  </script>
+</body>
+</html>
