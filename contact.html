@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact Us | Elite Document Suite</title>
-  <meta name="description" content="Get in touch with Elite Document Suite. Reach us via WhatsApp or email for questions, feedback, or support.">
+  <title>Contact Us | ToolVibe</title>
+  <meta name="description" content="Get in touch with ToolVibe. Reach us via WhatsApp or email for questions, feedback, or support.">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://jovial-pudding-aba321.netlify.app/contact.html">
+  <link rel="canonical" href="https://toolvibe.vercel.app/contact.html">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6366f1">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Contact Us | Elite Document Suite">
-  <meta property="og:description" content="Get in touch with Elite Document Suite via WhatsApp or email.">
-  <meta property="og:url" content="https://jovial-pudding-aba321.netlify.app/contact.html">
+  <meta property="og:title" content="Contact Us | ToolVibe">
+  <meta property="og:description" content="Get in touch with ToolVibe via WhatsApp or email.">
+  <meta property="og:url" content="https://toolvibe.vercel.app/contact.html">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -190,7 +190,7 @@
 <body>
 
   <nav class="navbar">
-    <a href="index.html" class="nav-brand">Elite Document Suite</a>
+    <a href="index.html" class="nav-brand">ToolVibe</a>
     <div class="nav-links" id="navLinks">
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
@@ -256,7 +256,7 @@
     <!-- Additional Info -->
     <div class="contact-info">
       <h2>Get in Touch</h2>
-      <p>Elite Document Suite is created and maintained by <strong>Muhammad Hussain Shakir</strong>. Whether you've found a bug, have a feature request, or simply want to say hello, don't hesitate to reach out.</p>
+      <p>ToolVibe is created and maintained by <strong>Muhammad Hussain Shakir</strong>. Whether you've found a bug, have a feature request, or simply want to say hello, don't hesitate to reach out.</p>
       <p>For the quickest response, WhatsApp is recommended. For longer or more detailed messages, email works best.</p>
     </div>
   </main>
@@ -269,12 +269,12 @@
       <a href="terms.html">Terms</a>
       <a href="privacy.html">Privacy</a>
     </div>
-    <p class="footer-copy">&copy; 2026 Elite Document Suite by Muhammad Hussain Shakir. All rights reserved.</p>
+    <p class="footer-copy">&copy; 2026 ToolVibe by Muhammad Hussain Shakir. All rights reserved.</p>
   </footer>
 
   <script>
     // Theme
-    const saved = localStorage.getItem('eds-theme') || 'dark';
+    const saved = localStorage.getItem('tv-theme') || 'dark';
     document.documentElement.setAttribute('data-theme', saved);
     const themeBtn = document.getElementById('themeBtn');
     const dd = document.getElementById('themeDropdown');
@@ -284,7 +284,7 @@
     opts.forEach(o => o.addEventListener('click', e => {
       e.stopPropagation();
       document.documentElement.setAttribute('data-theme', o.dataset.theme);
-      localStorage.setItem('eds-theme', o.dataset.theme);
+      localStorage.setItem('tv-theme', o.dataset.theme);
       opts.forEach(x => x.classList.remove('active')); o.classList.add('active');
       dd.classList.remove('open');
     }));

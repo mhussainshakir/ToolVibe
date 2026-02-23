@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Elite Document Suite | 50+ Free Online PDF, Image & Text Tools</title>
+  <title>ToolVibe | 50+ Free Online PDF, Image & Text Tools</title>
   <meta name="description" content="Free online tools for PDF editing, image processing, text utilities, and business documents. 100% private - all processing happens in your browser. No uploads, no sign-up needed.">
   <meta name="keywords" content="online PDF tools, image converter, text tools, business tools, free online tools, PDF merge, PDF compress, image resize, QR code generator, invoice generator, resume builder, password generator, OCR">
   <meta name="author" content="Muhammad Hussain Shakir">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
-  <link rel="canonical" href="https://jovial-pudding-aba321.netlify.app/">
+  <link rel="canonical" href="https://toolvibe.vercel.app/">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Elite Document Suite | 50+ Free Online Tools">
+  <meta property="og:title" content="ToolVibe | 50+ Free Online Tools">
   <meta property="og:description" content="Free online tools for PDF, Image, Text & Business documents. 100% private browser-based processing. No uploads needed.">
-  <meta property="og:url" content="https://jovial-pudding-aba321.netlify.app/">
-  <meta property="og:site_name" content="Elite Document Suite">
+  <meta property="og:url" content="https://toolvibe.vercel.app/">
+  <meta property="og:site_name" content="ToolVibe">
   <meta property="og:locale" content="en_US">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Elite Document Suite | 50+ Free Online Tools">
+  <meta name="twitter:title" content="ToolVibe | 50+ Free Online Tools">
   <meta name="twitter:description" content="Free online tools for PDF, Image, Text & Business. 100% private browser processing.">
 
   <!-- JSON-LD Structured Data -->
@@ -28,8 +28,8 @@
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "Elite Document Suite",
-    "url": "https://jovial-pudding-aba321.netlify.app/",
+    "name": "ToolVibe",
+    "url": "https://toolvibe.vercel.app/",
     "description": "50+ free online tools for PDF editing, image processing, text utilities, and business documents. All processing happens in your browser.",
     "applicationCategory": "UtilityApplication",
     "operatingSystem": "Web Browser",
@@ -48,8 +48,8 @@
 
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6366f1">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="/icon-192.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -557,7 +557,7 @@
 
   <!-- NAVBAR -->
   <nav class="navbar" role="navigation" aria-label="Main navigation">
-    <a href="index.html" class="nav-brand">Elite Document Suite</a>
+    <a href="index.html" class="nav-brand">ToolVibe</a>
     <div class="nav-links" id="navLinks">
       <a href="index.html" class="active">Home</a>
       <a href="#tools-section">Tools</a>
@@ -776,7 +776,7 @@
   <!-- WHY USE US -->
   <section class="section">
     <div class="section-header">
-      <h2>Why Elite Document Suite?</h2>
+      <h2>Why ToolVibe?</h2>
       <p>Built for privacy, speed, and simplicity</p>
     </div>
     <div class="features-grid">
@@ -805,8 +805,8 @@
 
   <!-- ABOUT SECTION -->
   <section class="about-section" id="about">
-    <h2>About Elite Document Suite</h2>
-    <p>Elite Document Suite is a free, privacy-focused collection of 50+ online tools for working with PDFs, images, text, and business documents. Created by <strong>Muhammad Hussain Shakir</strong>, our mission is to give everyone access to professional document tools without compromising privacy or paying expensive subscriptions.</p>
+    <h2>About ToolVibe</h2>
+    <p>ToolVibe is a free, privacy-focused collection of 50+ online tools for working with PDFs, images, text, and business documents. Created by <strong>Muhammad Hussain Shakir</strong>, our mission is to give everyone access to professional document tools without compromising privacy or paying expensive subscriptions.</p>
     <p>Every tool runs entirely in your web browser using modern JavaScript APIs. Your files are never uploaded to any server, making this one of the most private document tool suites available online.</p>
   </section>
 
@@ -820,7 +820,7 @@
       <a href="privacy.html">Privacy</a>
       <a href="#tools-section">All Tools</a>
     </div>
-    <p class="footer-copy">&copy; 2026 Elite Document Suite by Muhammad Hussain Shakir. All rights reserved.</p>
+    <p class="footer-copy">&copy; 2026 ToolVibe by Muhammad Hussain Shakir. All rights reserved.</p>
     <p class="footer-privacy">All processing happens in your browser. We never see your files.</p>
   </footer>
 
@@ -979,7 +979,7 @@
     const themeOptions = themeDropdown.querySelectorAll('.theme-option');
 
     // Load saved theme
-    const savedTheme = localStorage.getItem('eds-theme') || 'dark';
+    const savedTheme = localStorage.getItem('tv-theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     themeOptions.forEach(opt => {
       opt.classList.toggle('active', opt.dataset.theme === savedTheme);
@@ -995,7 +995,7 @@
         e.stopPropagation();
         const theme = this.dataset.theme;
         document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('eds-theme', theme);
+        localStorage.setItem('tv-theme', theme);
         themeOptions.forEach(o => o.classList.remove('active'));
         this.classList.add('active');
         themeDropdown.classList.remove('open');
