@@ -1598,7 +1598,126 @@
     }
     function hideLoading() { loadingOverlay.classList.remove('visible'); }
 
+    // ===== STAMP TOOL =====
+    const stampBtn = document.getElementById('stampBtn');
+    const stampTypes = [
+      { text: 'APPROVED', color: '#22c55e', border: '#22c55e' },
+      { text: 'REJECTED', color: '#ef4444', border: '#ef4444' },
+      { text: 'DRAFT', color: '#f59e0b', border: '#f59e0b' },
+      { text: 'CONFIDENTIAL', color: '#6366f1', border: '#6366f1' },
+      { text: 'FINAL', color: '#06b6d4', border: '#06b6d4' },
+      { text: 'COPY', color: '#8b5cf6', border: '#8b5cf6' },
+      { text: 'URGENT', color: '#f43f5e', border: '#f43f5e' },
+    ];
+    if (stampBtn) {
+      stampBtn.addEventListener('click', () => {
+        const sel = prompt('Choose stamp:\\n' + stampTypes.map((s,i) => (i+1)+'. '+s.text).join('\\n') + '\\n\\nEnter number (1-7):');
+        const idx = parseInt(sel) - 1;
+        if (idx >= 0 && idx < stampTypes.length) {
+          const st = stampTypes[idx];
+          const wrapper = document.querySelector('.page-wrapper[data-page="' + currentPage + '"] .annotation-layer');
+          if (!wrapper) return;
+          const stamp = document.createElement('div');
+          stamp.className = 'anno-stamp';
+          stamp.textContent = st.text;
+          stamp.style.color = st.color;
+          stamp.style.borderColor = st.border;
+          stamp.style.left = '30%'; stamp.style.top = '40%';
+          stamp.innerHTML += '<button class="delete-btn" onclick="this.parentElement.remove()">&times;</button>';
+          makeDraggable(stamp, wrapper);
+          wrapper.appendChild(stamp);
+          if (!annotations[currentPage]) annotations[currentPage] = [];
+          annotations[currentPage].push({ type:'stamp', text: st.text, color: st.color, x: wrapper.offsetWidth*0.3, y: wrapper.offsetHeight*0.4 });
+        }
+      });
+    }
+
+    // ===== COMMENT BUBBLE TOOL =====
+    const commentBtn = document.getElementById('commentBtn');
+    let commentCounter = 0;
+    if (commentBtn) {
+      commentBtn.addEventListener('click', () => {
+        const wrapper = document.querySelector('.page-wrapper[data-page="' + currentPage + '"] .annotation-layer');
+        if (!wrapper) return;
+        commentCounter++;
+        const bubble = document.createElement('div');
+        bubble.className = 'anno-comment';
+        bubble.textContent = commentCounter;
+        bubble.style.left = '50%'; bubble.style.top = '30%';
+        const popup = document.createElement('div');
+        popup.className = 'comment-popup';
+        popup.innerHTML = '<textarea placeholder="Type your comment..."></textarea>';
+        bubble.appendChild(popup);
+        bubble.innerHTML += '<button class="delete-btn" onclick="event.stopPropagation();this.parentElement.remove()">&times;</button>';
+        bubble.addEventListener('click', (e) => {
+          if (e.target.classList.contains('delete-btn')) return;
+          const p = bubble.querySelector('.comment-popup');
+          if (p) p.classList.toggle('open');
+        });
+        makeDraggable(bubble, wrapper);
+        wrapper.appendChild(bubble);
+      });
+    }
+
+    // ===== DRAGGABLE HELPER =====
+    function makeDraggable(el, container) {
+      let isDragging = false, startX, startY, origLeft, origTop;
+      el.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('delete-btn') || e.target.tagName === 'TEXTAREA') return;
+        isDragging = true;
+        startX = e.clientX; startY = e.clientY;
+        origLeft = el.offsetLeft; origTop = el.offsetTop;
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        el.style.left = (origLeft + e.clientX - startX) + 'px';
+        el.style.top = (origTop + e.clientY - startY) + 'px';
+      });
+      document.addEventListener('mouseup', () => { isDragging = false; });
+      // Touch support
+      el.addEventListener('touchstart', (e) => {
+        if (e.target.classList.contains('delete-btn') || e.target.tagName === 'TEXTAREA') return;
+        isDragging = true;
+        const t = e.touches[0];
+        startX = t.clientX; startY = t.clientY;
+        origLeft = el.offsetLeft; origTop = el.offsetTop;
+      }, {passive: true});
+      document.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const t = e.touches[0];
+        el.style.left = (origLeft + t.clientX - startX) + 'px';
+        el.style.top = (origTop + t.clientY - startY) + 'px';
+      }, {passive: true});
+      document.addEventListener('touchend', () => { isDragging = false; });
+    }
+
   })();
   </script>
+
+  <!-- Mobile Floating Action Bar -->
+  <div class="mobile-fab" id="mobileFab">
+    <button class="fab-btn" onclick="document.querySelector('[data-tool=text]').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+      <span class="fab-label">Text</span>
+    </button>
+    <button class="fab-btn" onclick="document.querySelector('[data-tool=draw]').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+      <span class="fab-label">Draw</span>
+    </button>
+    <button class="fab-btn" onclick="document.querySelector('[data-tool=highlight]').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-6 6v3h9l3-3"/><path d="M22 12l-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+      <span class="fab-label">Highlight</span>
+    </button>
+    <button class="fab-btn" onclick="document.getElementById('stampBtn').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 21h14"/><path d="M12 17V11"/><rect x="6" y="6" width="12" height="5" rx="1"/></svg>
+      <span class="fab-label">Stamp</span>
+    </button>
+    <button class="fab-btn save-fab" onclick="savePDF()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      <span class="fab-label">Save</span>
+    </button>
+  </div>
+
 </body>
 </html>
